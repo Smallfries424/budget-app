@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-slate-50);
+  color: var(--color-slate-900);
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: var(--color-slate-950);
+    color: var(--color-slate-100);
+  }
+}
+
+/* Respect the iOS safe area for the bottom tab bar. */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+}
