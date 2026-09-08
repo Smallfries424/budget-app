@@ -49,4 +49,4 @@ routes every path back to `index.html` so client-side routing works.
   only offers 50/50)
 - CSV import from bank statements
 - Editing or deleting individual goal contributions and settlements
-- Multi-currency (everything is USD via `Intl.NumberFormat`)
+- Multi-currency (everything is Canadian dollars via `Intl.NumberFormat`)

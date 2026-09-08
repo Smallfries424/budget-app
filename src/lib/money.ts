@@ -1,6 +1,7 @@
-const fmt = new Intl.NumberFormat(undefined, {
+const fmt = new Intl.NumberFormat('en-CA', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'CAD',
+  currencyDisplay: 'narrowSymbol',
 })
 
 /** Format a number as currency, e.g. 1234.5 becomes "$1,234.50". */
