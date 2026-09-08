@@ -19,10 +19,11 @@ drop function if exists join_household(text, text) cascade;
 -- Tables
 -- ---------------------------------------------------------------------------
 create table households (
-  id          uuid primary key default gen_random_uuid(),
-  name        text not null,
-  invite_code text not null unique default substr(md5(random()::text), 1, 8),
-  created_at  timestamptz not null default now()
+  id             uuid primary key default gen_random_uuid(),
+  name           text not null,
+  invite_code    text not null unique default substr(md5(random()::text), 1, 8),
+  monthly_income numeric(12,2) not null default 0,
+  created_at     timestamptz not null default now()
 );
 
 create table household_members (

@@ -4,6 +4,7 @@ export interface Household {
   id: string
   name: string
   invite_code: string
+  monthly_income: number
   created_at: string
 }
 

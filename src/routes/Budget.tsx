@@ -1,18 +1,23 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useHousehold } from '../hooks/useHousehold'
+import { useMonth } from '../hooks/useMonth'
 import { categoryLines, inMonth } from '../lib/select'
 import { money, parseAmount } from '../lib/money'
 import { Button, Card, Input } from '../components/ui'
+import MonthSwitcher from '../components/MonthSwitcher'
 
 export default function Budget() {
   const { household, categories, transactions, refresh } = useHousehold()
-  const lines = categoryLines(categories, inMonth(transactions))
+  const { ref } = useMonth()
+  const lines = categoryLines(categories, inMonth(transactions, ref))
   const [newName, setNewName] = useState('')
   const [newBudget, setNewBudget] = useState('')
   const [busy, setBusy] = useState(false)
 
   const totalBudget = lines.reduce((s, l) => s + l.budget, 0)
+  const income = household?.monthly_income ?? 0
+  const leftToBudget = income - totalBudget
 
   async function add(e: React.FormEvent) {
     e.preventDefault()
@@ -27,6 +32,15 @@ export default function Budget() {
     setNewName('')
     setNewBudget('')
     setBusy(false)
+    await refresh()
+  }
+
+  async function updateIncome(value: string) {
+    const n = parseAmount(value)
+    await supabase
+      .from('households')
+      .update({ monthly_income: Number.isFinite(n) ? n : 0 })
+      .eq('id', household!.id)
     await refresh()
   }
 
@@ -46,10 +60,26 @@ export default function Budget() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-baseline justify-between">
+      <header className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Budget</h1>
-        <span className="text-sm text-slate-500">{money(totalBudget)} / month</span>
+        <MonthSwitcher />
       </header>
+
+      <Card>
+        <div className="flex items-center gap-3">
+          <span className="flex-1 text-sm font-medium">Monthly income</span>
+          <AmountInput key={income} initial={income} onCommit={updateIncome} />
+        </div>
+        <p className="mt-2 text-xs text-slate-400">
+          {money(totalBudget)} budgeted
+          {income > 0 && (
+            <span className={leftToBudget < 0 ? 'text-red-600' : ''}>
+              {' '}
+              · {money(Math.abs(leftToBudget))} {leftToBudget < 0 ? 'over budget' : 'left to budget'}
+            </span>
+          )}
+        </p>
+      </Card>
 
       <Card>
         <form onSubmit={add} className="flex gap-2">
@@ -76,7 +106,8 @@ export default function Budget() {
           <Card key={l.category.id} className="!p-3">
             <div className="flex items-center gap-3">
               <span className="flex-1 text-sm font-medium">{l.category.name}</span>
-              <BudgetInput
+              <AmountInput
+                key={l.budget}
                 initial={l.budget}
                 onCommit={(v) => updateBudget(l.category.id, v)}
               />
@@ -105,7 +136,7 @@ export default function Budget() {
   )
 }
 
-function BudgetInput({
+function AmountInput({
   initial,
   onCommit,
 }: {

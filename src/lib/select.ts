@@ -37,19 +37,40 @@ export function categoryLines(
 }
 
 export interface MonthTotals {
+  /** Sum of every category's monthly budget. */
   budgeted: number
+  /** Every expense logged in the month (all positive-amount transactions). */
   spent: number
-  remaining: number
-  income: number
+  /** Income actually logged in the month (negative-amount transactions). */
+  actualIncome: number
+  /** The household's set monthly income figure. */
+  plannedIncome: number
+  /** What is left of the month's money after spending. Measured against
+   *  planned income when it is set, otherwise against the total budgeted. */
+  leftToSpend: number
+  /** Planned income minus everything budgeted into categories. */
+  leftToBudget: number
 }
 
-export function monthTotals(lines: CategoryLine[], txns: Transaction[]): MonthTotals {
+export function monthTotals(
+  lines: CategoryLine[],
+  txns: Transaction[],
+  plannedIncome = 0,
+): MonthTotals {
   const budgeted = lines.reduce((s, l) => s + l.budget, 0)
-  const spent = lines.reduce((s, l) => s + Math.max(l.spent, 0), 0)
-  const income = txns
+  const spent = txns.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0)
+  const actualIncome = txns
     .filter((t) => t.amount < 0)
     .reduce((s, t) => s + -t.amount, 0)
-  return { budgeted, spent, remaining: budgeted - spent, income }
+  const base = plannedIncome > 0 ? plannedIncome : budgeted
+  return {
+    budgeted,
+    spent,
+    actualIncome,
+    plannedIncome,
+    leftToSpend: base - spent,
+    leftToBudget: plannedIncome - budgeted,
+  }
 }
 
 /** The payer's own share of a shared transaction. */
