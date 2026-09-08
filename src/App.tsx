@@ -7,6 +7,7 @@ import Onboarding from './routes/Onboarding'
 import Home from './routes/Home'
 import Transactions from './routes/Transactions'
 import TransactionForm from './routes/TransactionForm'
+import Import from './routes/Import'
 import Budget from './routes/Budget'
 import Goals from './routes/Goals'
 import Settle from './routes/Settle'
@@ -36,6 +37,7 @@ function Gate() {
         <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="transactions/new" element={<TransactionForm />} />
+      <Route path="import" element={<Import />} />
       <Route path="transactions/:id" element={<TransactionForm />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -34,12 +34,20 @@ export default function Transactions() {
     <div className="space-y-4">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Activity</h1>
-        <Link
-          to="/transactions/new"
-          className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-white dark:text-slate-900"
-        >
-          Add
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/import"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-300 dark:text-slate-200 dark:ring-slate-700"
+          >
+            Import
+          </Link>
+          <Link
+            to="/transactions/new"
+            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-white dark:text-slate-900"
+          >
+            Add
+          </Link>
+        </div>
       </header>
 
       <div className="flex gap-2">
