@@ -26,6 +26,14 @@ export default function Settle() {
     await refresh()
   }
 
+  async function removeSettlement(id: string) {
+    if (!confirm('Delete this settlement?')) return
+    setBusy(true)
+    await supabase.from('settlements').delete().eq('id', id)
+    setBusy(false)
+    await refresh()
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold">Settle up</h1>
@@ -64,9 +72,18 @@ export default function Settle() {
               </span>
               <span className="tabular-nums">{money(s.amount)}</span>
             </div>
-            <p className="text-xs text-slate-400">
-              {new Date(s.occurred_on + 'T00:00:00').toLocaleDateString()}
-            </p>
+            <div className="mt-0.5 flex items-center justify-between">
+              <p className="text-xs text-slate-400">
+                {new Date(s.occurred_on + 'T00:00:00').toLocaleDateString()}
+              </p>
+              <button
+                onClick={() => removeSettlement(s.id)}
+                disabled={busy}
+                className="text-xs text-slate-400 underline"
+              >
+                Remove
+              </button>
+            </div>
           </Card>
         ))}
       </div>
