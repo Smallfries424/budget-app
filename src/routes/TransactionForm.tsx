@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useHousehold } from '../hooks/useHousehold'
-import { parseAmount } from '../lib/money'
+import { money, parseAmount } from '../lib/money'
 import type { SplitType } from '../lib/types'
 import { Button, Card, Field, Input, Select } from '../components/ui'
 
@@ -21,6 +21,7 @@ export default function TransactionForm() {
   const [categoryId, setCategoryId] = useState('')
   const [paidBy, setPaidBy] = useState(user?.id ?? '')
   const [splitType, setSplitType] = useState<SplitType>('none')
+  const [payerPercent, setPayerPercent] = useState('50')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,7 +36,14 @@ export default function TransactionForm() {
     setCategoryId(t.category_id ?? '')
     setPaidBy(t.paid_by ?? '')
     setSplitType(t.split_type)
+    setPayerPercent(
+      t.split_type === 'custom' && t.payer_share != null
+        ? String(Number((t.payer_share * 100).toFixed(2)))
+        : '50',
+    )
   }, [editing, id, transactions])
+
+  const payerPercentValue = Math.min(100, Math.max(0, Number(payerPercent) || 0))
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
@@ -54,7 +62,10 @@ export default function TransactionForm() {
       category_id: categoryId || null,
       paid_by: paidBy || null,
       split_type: isIncome ? ('none' as SplitType) : splitType,
-      payer_share: null as number | null,
+      payer_share:
+        !isIncome && splitType === 'custom'
+          ? payerPercentValue / 100
+          : (null as number | null),
     }
     const res = editing
       ? await supabase.from('transactions').update(row).eq('id', id)
@@ -165,12 +176,45 @@ export default function TransactionForm() {
             <Field label="Split">
               <Select
                 value={splitType}
-                onChange={(e) => setSplitType(e.target.value as SplitType)}
+                onChange={(e) => {
+                  const next = e.target.value as SplitType
+                  setSplitType(next)
+                  if (next === 'custom') setPayerPercent('50')
+                }}
               >
                 <option value="none">Not shared</option>
                 <option value="even">Split 50/50</option>
+                <option value="custom">Custom split</option>
               </Select>
             </Field>
+          )}
+
+          {!isIncome && splitType === 'custom' && (
+            <div className="space-y-2">
+              <Field label="Payer's share (%)">
+                <Input
+                  inputMode="numeric"
+                  value={payerPercent}
+                  onChange={(e) => setPayerPercent(e.target.value)}
+                  placeholder="50"
+                />
+              </Field>
+              {(() => {
+                const total = parseAmount(amountText)
+                if (!Number.isFinite(total) || total <= 0) return null
+                const payerAmount = (total * payerPercentValue) / 100
+                const payerName =
+                  members.find((m) => m.user_id === paidBy)?.display_name ?? 'Payer'
+                const otherName =
+                  members.find((m) => m.user_id !== paidBy)?.display_name ?? 'Them'
+                return (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {payerName}: {money(payerAmount)}, {otherName}:{' '}
+                    {money(total - payerAmount)}
+                  </p>
+                )
+              })()}
+            </div>
           )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
