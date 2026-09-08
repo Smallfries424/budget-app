@@ -3,12 +3,18 @@ import { supabase } from '../lib/supabase'
 import { useHousehold } from '../hooks/useHousehold'
 import { Button, Card, Field, Input } from '../components/ui'
 
+/** An invite code passed in the URL, e.g. ?invite=a1b2c3d4 */
+function inviteFromUrl(): string {
+  return new URLSearchParams(window.location.search).get('invite')?.trim() ?? ''
+}
+
 export default function Onboarding() {
   const { refresh } = useHousehold()
-  const [tab, setTab] = useState<'create' | 'join'>('create')
+  const invited = inviteFromUrl()
+  const [tab, setTab] = useState<'create' | 'join'>(invited ? 'join' : 'create')
   const [name, setName] = useState('')
   const [householdName, setHouseholdName] = useState('')
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(invited)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
