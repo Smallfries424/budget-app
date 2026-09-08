@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Button, Card, Field, Input } from '../components/ui'
 
+const hasInvite = new URLSearchParams(window.location.search).has('invite')
+
 export default function Login() {
-  const [mode, setMode] = useState<'in' | 'up'>('in')
+  const [mode, setMode] = useState<'in' | 'up'>(hasInvite ? 'up' : 'in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -34,7 +36,11 @@ export default function Login() {
     <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4">
       <h1 className="mb-1 text-2xl font-bold">Budget App</h1>
       <p className="mb-6 text-sm text-slate-500">
-        {mode === 'in' ? 'Sign in to your shared budget.' : 'Create your account.'}
+        {hasInvite
+          ? 'You have been invited to a budget. Create an account, then you can join it.'
+          : mode === 'in'
+            ? 'Sign in to your shared budget.'
+            : 'Create your account.'}
       </p>
       <Card>
         <form onSubmit={submit} className="space-y-4">
