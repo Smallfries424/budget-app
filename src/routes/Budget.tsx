@@ -4,6 +4,7 @@ import { useHousehold } from '../hooks/useHousehold'
 import { useMonth } from '../hooks/useMonth'
 import { categoryLines, inMonth } from '../lib/select'
 import { money, parseAmount } from '../lib/money'
+import { DEFAULT_CATEGORIES } from '../lib/defaultCategories'
 import { Button, Card, Input } from '../components/ui'
 import MonthSwitcher from '../components/MonthSwitcher'
 
@@ -58,6 +59,26 @@ export default function Budget() {
     await refresh()
   }
 
+  const existingNames = new Set(categories.map((c) => c.name.toLowerCase()))
+  const missingDefaults = DEFAULT_CATEGORIES.filter(
+    (name) => !existingNames.has(name.toLowerCase()),
+  )
+
+  async function addDefaults() {
+    if (missingDefaults.length === 0) return
+    setBusy(true)
+    await supabase.from('categories').insert(
+      missingDefaults.map((name, i) => ({
+        household_id: household!.id,
+        name,
+        monthly_budget: 0,
+        sort_order: categories.length + i,
+      })),
+    )
+    setBusy(false)
+    await refresh()
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex items-center justify-between">
@@ -99,6 +120,15 @@ export default function Budget() {
             Add
           </Button>
         </form>
+        {missingDefaults.length > 0 && (
+          <button
+            onClick={addDefaults}
+            disabled={busy}
+            className="mt-2 text-xs text-slate-400 underline"
+          >
+            + Add starter categories ({missingDefaults.length})
+          </button>
+        )}
       </Card>
 
       <div className="space-y-2">
@@ -128,7 +158,7 @@ export default function Budget() {
         ))}
         {lines.length === 0 && (
           <p className="px-1 text-sm text-slate-500">
-            Add a few categories: Rent, Groceries, Eating out, Fun.
+            Add a category above, or use the starter set to get going fast.
           </p>
         )}
       </div>

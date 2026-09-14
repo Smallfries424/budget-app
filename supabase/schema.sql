@@ -124,10 +124,19 @@ set search_path = public
 as $$
 declare
   h households;
+  default_categories text[] := array[
+    'Rent/Mortgage', 'Groceries', 'Bars & Restaurants', 'Entertainment',
+    'Utilities', 'Transportation', 'Subscriptions', 'Shopping',
+    'Health & Fitness', 'Personal Care', 'Travel', 'Gifts & Donations',
+    'Pets', 'Miscellaneous'
+  ];
 begin
   insert into households (name) values (household_name) returning * into h;
   insert into household_members (household_id, user_id, display_name)
     values (h.id, auth.uid(), member_name);
+  insert into categories (household_id, name, sort_order)
+    select h.id, c, ord - 1
+    from unnest(default_categories) with ordinality as t(c, ord);
   return h;
 end;
 $$;
