@@ -1,0 +1,34 @@
+name: Keep Supabase awake
+
+# Supabase pauses free-tier projects after 7 days with no API activity, and a
+# paused project needs a manual restore from the dashboard before it works
+# again — so a link to this app can silently start failing for visitors.
+# This just pings the REST endpoint often enough that the project is never
+# idle for that long. Twice a week is a comfortable margin under 7 days.
+
+on:
+  schedule:
+    - cron: '0 14 * * 1,4'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST endpoint
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/categories?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY")
+          echo "Supabase responded with HTTP $code"
+          # Any response from the API (including a 200 with zero rows, which
+          # is what row-level security returns to an unauthenticated caller)
+          # counts as activity. Only fail the run if the project didn't
+          # answer at all.
+          if [ -z "$code" ]; then
+            echo "No response from Supabase" >&2
+            exit 1
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
